@@ -9,8 +9,14 @@ export async function GET(request: Request) {
   }
 
   try {
-    const apiUrl = `https://api.siputzx.my.id/api/s/resep?query=${encodeURIComponent(query)}`;
-    const response = await fetch(apiUrl);
+    const apiUrl = 'https://api.siputzx.my.id/api/s/resep';
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query }),
+    });
 
     if (!response.ok) {
       throw new Error(`External API error: ${response.statusText}`);
