@@ -318,6 +318,10 @@ export default function Home() {
           </div>
         )}
       </div>
+      {/* Footer */}
+      <footer className="mt-auto border-t border-stone-200 bg-white py-6 text-center text-sm text-stone-500">
+        <p>Copyright @iky.apake</p>
+      </footer>
     </main>
   );
 }
