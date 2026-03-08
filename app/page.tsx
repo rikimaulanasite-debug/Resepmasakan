@@ -174,6 +174,8 @@ export default function Home() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,9 +186,14 @@ export default function Home() {
     setSearched(true);
     setRecipes([]);
     setSelectedRecipe(null);
+    setCurrentPage(1);
 
     try {
-      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
       if (!res.ok) throw new Error('Failed to fetch');
       
       const data: ApiResponse = await res.json();
@@ -204,8 +211,16 @@ export default function Home() {
     }
   };
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentRecipes = recipes.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(recipes.length / itemsPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900 font-sans">
+    <main className="min-h-screen bg-stone-50 text-stone-900 font-sans flex flex-col">
       <AnimatePresence>
         {selectedRecipe && (
           <RecipeModal recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
@@ -278,7 +293,7 @@ export default function Home() {
       </div>
 
       {/* Results Section */}
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 flex-1 w-full">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 size={48} className="animate-spin text-orange-500" />
@@ -289,16 +304,55 @@ export default function Home() {
             <p>{error}</p>
           </div>
         ) : recipes.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {recipes.map((recipe, index) => (
-              <RecipeCard 
-                key={index} 
-                recipe={recipe} 
-                index={index} 
-                onSelect={setSelectedRecipe}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {currentRecipes.map((recipe, index) => (
+                <RecipeCard 
+                  key={index} 
+                  recipe={recipe} 
+                  index={index} 
+                  onSelect={setSelectedRecipe}
+                />
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-center gap-2">
+                <button
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                    <button
+                      key={number}
+                      onClick={() => paginate(number)}
+                      className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === number
+                          ? 'bg-orange-600 text-white'
+                          : 'bg-white text-stone-600 hover:bg-stone-50 border border-stone-200'
+                      }`}
+                    >
+                      {number}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         ) : searched ? (
           <div className="flex flex-col items-center justify-center py-20 text-stone-400">
             <UtensilsCrossed size={64} className="mb-4 opacity-20" />
