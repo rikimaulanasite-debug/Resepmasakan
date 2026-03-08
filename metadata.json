@@ -1,0 +1,5 @@
+{
+  "name": "ResepKu",
+  "description": "A recipe search application using the Siputzx API to find delicious recipes.",
+  "requestFramePermissions": []
+}
